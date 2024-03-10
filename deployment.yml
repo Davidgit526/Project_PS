@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobseeker-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: jobseeker-app
+  template:
+    metadata:
+      labels:
+        app: jobseeker-app
+    spec:
+      containers:
+      - name: jobseeker-app-container
+        image: adithireddy52/projectps:latest
+        ports:
+          - containerPort: 3000
+        env:
+         - name: MONGODB_URI
+           value: "mongodb://mongo:27017/job_portal"
+      - name: mongo
+        image: mongo:latest
+        ports:
+           - containerPort: 27017

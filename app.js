@@ -1,7 +1,8 @@
+// app.js
+
 const express = require('express');
 const mongoose = require('mongoose');
 
-// Connect to MongoDB
 mongoose.connect('mongodb://mongo:27017/job_portal', { useNewUrlParser: true, useUnifiedTopology: true });
 const db = mongoose.connection;
 
@@ -10,7 +11,6 @@ db.once('open', () => {
   console.log('Connected to MongoDB database');
 });
 
-// Define a schema for job seekers
 const jobSeekerSchema = new mongoose.Schema({
   fullName: String,
   email: { type: String, index: true },
@@ -27,16 +27,12 @@ const jobSeekerSchema = new mongoose.Schema({
   expectedSalary: String
 }, { autoIndex: false });
 
-// Create a model from the schema
 const JobSeeker = mongoose.model('JobSeeker', jobSeekerSchema);
 
-// Create Express application
 const app = express();
 
-// Middleware to parse URL-encoded form data
 app.use(express.urlencoded({ extended: true }));
 
-// Route to handle job seeker registration form submission
 app.post('/register', (req, res) => {
   const newJobSeeker = new JobSeeker({
     fullName: req.body.fullName,
@@ -57,7 +53,6 @@ app.post('/register', (req, res) => {
   newJobSeeker.save()
     .then(savedJobSeeker => {
       console.log('Job seeker registered successfully:', savedJobSeeker);
-      // Construct HTML response to display success message in the middle
       const successMessage = `
         <!DOCTYPE html>
         <html lang="en">
@@ -82,6 +77,7 @@ app.post('/register', (req, res) => {
           <div class="success-message">
             <h1>Job seeker registered successfully</h1>
             <p>${savedJobSeeker.fullName} has been added.</p>
+            <a href="/details/${savedJobSeeker._id}"><button>View Details</button></a>
           </div>
         </body>
         </html>
@@ -94,12 +90,43 @@ app.post('/register', (req, res) => {
     });
 });
 
-// Serve HTML form
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Start the Express server
+app.get('/details/:id', (req, res) => {
+  const jobId = req.params.id;
+  JobSeeker.findById(jobId)
+    .then(job => {
+      if (!job) {
+        res.status(404).send('Job seeker not found');
+        return;
+      }
+      res.send(`
+        <h1>Job Seeker Details</h1>
+        <ul>
+          <li>Full Name: ${job.fullName}</li>
+          <li>Email: ${job.email}</li>
+          <li>Phone Number: ${job.phoneNumber}</li>
+          <li>Street: ${job.street}</li>
+          <li>City: ${job.city}</li>
+          <li>State: ${job.state}</li>
+          <li>Zip: ${job.zip}</li>
+          <li>Country: ${job.country}</li>
+          <li>Current Job Title: ${job.currentJobTitle}</li>
+          <li>Industry: ${job.industry}</li>
+          <li>Years of Experience: ${job.experienceYears}</li>
+          <li>Highest Education Level: ${job.educationLevel}</li>
+          <li>Expected Salary: ${job.expectedSalary}</li>
+        </ul>
+      `);
+    })
+    .catch(err => {
+      console.error('Error retrieving job seeker details: ', err);
+      res.status(500).send('An error occurred while retrieving job seeker details: ' + err.message);
+    });
+});
+
 const port = 3000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
