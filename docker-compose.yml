@@ -1,22 +1,17 @@
 version: '3.8'
- 
+
 services:
-  nodejs:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: node-cont
-    #restart: unless-stopped
+  king-3:
+    image: david-3
+    build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
+    depends_on:
+      - mongodb
     environment:
       MONGO_URI: mongodb://mongo:27017/job_portal
-    depends_on:
-      - mongo
-  mongo:
-      container_name: mongodb-cont
-      image: mongo
-      volumes:
-        - ./data:/data/db
-      ports:
-        - 27017:27017
+
+  mongodb:
+    image: mango:latest
+    ports:
+      - '27017:27017'
